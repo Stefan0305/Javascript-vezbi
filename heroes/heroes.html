@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LoL Champions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .search-section {
+            width: 80%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin: 30px auto;
+            border: 1px solid lightgray;
+            align-items: center;
+        }
+
+        .categories {
+            display: flex;
+            flex-direction: row;
+            width: 50%;
+            justify-content: space-between;
+        }
+
+        #search-field,
+        #select-difficulties {
+            height: 40px;
+        }
+
+        #hero-cards {
+            padding: 50px;
+            justify-content: center;
+            margin: auto;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .hero {
+            width: 200px;
+            height: 413px;
+            position: relative;
+            margin: 10px;
+        }
+
+        .hero img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .hero-name {
+            display: block;
+            width: 100%;
+            height: 50px;
+            position: absolute;
+            bottom: -1px;
+            padding-left: 20px;
+            font: 800 18px Verdana;
+            line-height: 50px;
+            background-color: #061c25;
+            color: white;
+        }
+
+        .star {
+            width: 30px;
+            position: absolute;
+            bottom: 12px;
+            right: 15px;
+            cursor: pointer;
+        }
+
+        .category {
+            cursor: pointer;
+            font: 600 10px Verdana;
+            border-bottom: 3px solid gold;
+            border-bottom-style: dashed;
+            transition: all 0s linear;
+        }
+
+        .category:hover {
+            transform: scale(1.1);
+        }
+        
+    </style>
+</head>
+
+<body>
+    <div class="search-section">
+        <input type="search" name="search-field" id="search-field">
+        <div class="categories">
+            <div class="category" onclick="createHeroCards()">ALL</div>
+            <div class="category">ASSASSINS</div>
+            <div class="category">FIGHTERS</div>
+            <div class="category">MAGES</div>
+            <div class="category">MARKSMEN</div>
+            <div class="category">SUPPORTS</div>
+            <div class="category">TANKS</div>
+            <div class="category" id="favorites-btn">FAVORITES</div>
+        </div>
+        <select name="select-difficulties" id="select-difficulties">
+            <option value="all" selected>ALL DIFFICULTIES</option>
+            <option value="easy">EASY</option>
+            <option value="medium">MEDIUM</option>
+            <option value="hard">HARD</optiondiv>
+        </select>
+    </div>
+
+
+    <div id="hero-cards"></div>
+
+
+
+    <script>
+        let heroesList;
+        let favoriteHeroes = [];
+        let cards = document.getElementById("hero-cards");
+
+        function getHeroes() {
+            fetch('http://ddragon.leagueoflegends.com/cdn/12.6.1/data/en_US/champion.json')
+                .then(response => response.json())
+                .then(data => {
+                    heroesList = data.data;
+                    createHeroCards();
+                    
+                });
+        }
+
+        function createHeroCards() {
+            cards.innerHTML= "";
+            for (const i in heroesList) {
+            
+                let hero = heroesList[i];
+                let heroDiv = document.createElement("div");
+                heroDiv.classList.add("hero");
+                let heroLink = document.createElement('a');
+                heroDiv.append(heroLink);
+                let heroImg = document.createElement('img');
+                heroImg.setAttribute("src", `http://ddragon.leagueoflegends.com/cdn/img/champion/loading/${hero.id}_0.jpg`);
+                heroImg.setAttribute("alt", `Image of ${hero.id}`);
+                heroLink.append(heroImg);
+                let heroName = document.createElement("span");
+                heroName.append(document.createTextNode(hero.name));
+                let starImg = document.createElement("img");
+
+                if(favoriteHeroes.find( (obj) => obj.id === i)){
+                    starImg.setAttribute("src", "images/star.png");
+                }else{
+                    starImg.setAttribute("src", "images/outlinestar.png");
+                }
+                starImg.classList.add("star");
+
+                starImg.addEventListener("click", () => {
+                    if (starImg.src.includes("outline")) {
+                        starImg.src = "images/star.png";
+                        addFavorite(i);
+                    } else {
+                        starImg.src = "images/outlinestar.png";
+                        removeFavorite(i);
+                    }
+                });
+
+                heroName.append(starImg);
+                heroName.classList.add("hero-name");
+                heroLink.append(heroName);
+                cards.append(heroDiv);
+            };
+        }
+
+        function addFavorite(name) {
+
+            favoriteHeroes.push(heroesList[name]);
+            favoriteHeroes.sort((a, b) => {
+                if (a.id < b.id) { return -1; }
+                if (a.id > b.id) { return 1; }
+                return 0;
+            });
+            
+        }
+
+        function removeFavorite(name) {
+            let index= favoriteHeroes.findIndex( (hero) => hero.id === name);
+            favoriteHeroes.splice(index, 1);
+            
+        }
+
+        function showFavorites(){
+            cards.innerHTML= "";
+            favoriteHeroes.forEach(favHero => {
+                
+                let heroDiv = document.createElement("div");
+                heroDiv.classList.add("hero");
+                let heroLink = document.createElement('a');
+                heroDiv.append(heroLink);
+                let heroImg = document.createElement('img');
+                heroImg.setAttribute("src", `http://ddragon.leagueoflegends.com/cdn/img/champion/loading/${favHero.id}_0.jpg`);
+                heroImg.setAttribute("alt", `Image of ${favHero.id}`);
+                heroLink.append(heroImg);
+                let heroName = document.createElement("span");
+                heroName.append(document.createTextNode(favHero.name));
+                let starImg = document.createElement("img");
+                starImg.setAttribute("src", "images/star.png");
+                starImg.classList.add("star");
+                starImg.addEventListener("click", () => {
+                    let delDiv= event.target.parentNode.parentNode.parentNode;
+                    delDiv.parentNode.removeChild(delDiv);
+                    removeFavorite(favHero.id);
+                })
+                heroName.append(starImg);
+                heroName.classList.add("hero-name");
+                heroLink.append(heroName);
+                cards.append(heroDiv);
+            });
+        }
+
+        document.getElementById("favorites-btn").addEventListener("click", showFavorites);
+
+        getHeroes();
+
+
+    </script>
+</body>
+
+</html>
